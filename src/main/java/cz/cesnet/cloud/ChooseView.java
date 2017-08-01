@@ -1,10 +1,13 @@
 package cz.cesnet.cloud;
 
 import com.vaadin.data.provider.ListDataProvider;
+import com.vaadin.icons.VaadinIcons;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
+import com.vaadin.server.Page;
 import com.vaadin.shared.Registration;
 import com.vaadin.ui.*;
+import com.vaadin.ui.themes.ValoTheme;
 import com.vaadin.util.ReflectTools;
 import cz.cesnet.cloud.occi.api.exception.CommunicationException;
 import cz.cesnet.cloud.sources.*;
@@ -22,21 +25,27 @@ import java.net.URLEncoder;
 import java.util.*;
 
 public class ChooseView extends HorizontalLayout implements View {
-	private final CheckBoxGroup<VO> vos = new CheckBoxGroup<>();
+	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
+
+	//private final CheckBoxGroup<VO> vos = new CheckBoxGroup<>();
+	private final RadioButtonGroup<VO> vos = new RadioButtonGroup<>();
 	private LinkedList<VO> vosList = new LinkedList<>();
 	private ListDataProvider<VO> vosProvider = new ListDataProvider<>(vosList);
 
-	private final CheckBoxGroup<Service> services = new CheckBoxGroup<>();
+	//private final CheckBoxGroup<Service> services = new CheckBoxGroup<>();
+	private final RadioButtonGroup<Service> services = new RadioButtonGroup<>();
 	private LinkedList<Service> servicesList = new LinkedList<>();
 	private ListDataProvider<Service> servicesProvider = new ListDataProvider<>(servicesList);
 
-	private final CheckBoxGroup<Image> images = new CheckBoxGroup<>();
+	//private final CheckBoxGroup<Image> images = new CheckBoxGroup<>();
+	private final RadioButtonGroup<Image> images = new RadioButtonGroup<>();
 	private Map<String, List<Image>> imagesMap;
 	private LinkedList<Image> imagesList = new LinkedList<>();
 	private LinkedList<Image> imagesFullList = new LinkedList<>();
 	private ListDataProvider<Image> imagesProvider = new ListDataProvider<>(imagesList);
 
-	private final CheckBoxGroup<Flavour> flavours = new CheckBoxGroup<>();
+	//private final CheckBoxGroup<Flavour> flavours = new CheckBoxGroup<>();
+	private final RadioButtonGroup<Flavour> flavours = new RadioButtonGroup<>();
 	private LinkedList<Flavour> flavoursList = new LinkedList<>();
 	private ListDataProvider<Flavour> flavoursProvider = new ListDataProvider<>(flavoursList);
 
@@ -74,12 +83,12 @@ public class ChooseView extends HorizontalLayout implements View {
 		images.addValueChangeListener(valueChangeEvent -> filtering());
 
 		services.addValueChangeListener(valueChangeEvent -> {
-			System.out.println(valueChangeEvent.getValue().size());
-			if (valueChangeEvent.getValue().size() == 1) {
-				flavoursList.addAll(valueChangeEvent.getValue().iterator().next().getFlavours());
+			System.out.println(valueChangeEvent.getValue());
+			if (valueChangeEvent.getValue() != null) {
+				flavoursList.addAll(valueChangeEvent.getValue().getFlavours());
 				flavoursProvider.refreshAll();
 			} else {
-				flavours.deselectAll();
+				flavours.setSelectedItem(null);
 				flavoursList.clear();
 				flavoursProvider.refreshAll();
 			}
@@ -90,6 +99,12 @@ public class ChooseView extends HorizontalLayout implements View {
 		images.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
 		flavours.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
 
+		Button nextButton = new Button("Continue", VaadinIcons.ANGLE_RIGHT);
+		nextButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
+		nextButton.setEnabled(false);
+
+		nextButton.addClickListener(clickEvent -> Page.getCurrent().open(GUOCCI_URL + getURLParams(), null));
+		addCompletedListener(event -> nextButton.setEnabled(event.getCompleted()));
 
 		final Panel vosPanel = new Panel("Virtual organizations", vos);
 		final Panel servicesPanel = new Panel("Service sites", services);
@@ -102,6 +117,7 @@ public class ChooseView extends HorizontalLayout implements View {
 		}
 		addComponent(imagesPanel);
 		addComponent(flavoursPanel);
+		addComponent(nextButton);
 	}
 
 	@Override
@@ -121,7 +137,7 @@ public class ChooseView extends HorizontalLayout implements View {
 			servicesList.addAll(m.getServices());
 
 			if (servicesList.size() == 1) {
-				services.select(servicesList.get(0));
+				services.setSelectedItem(servicesList.get(0));
 			}
 
 			if (m.getImages() != null) {
@@ -133,26 +149,26 @@ public class ChooseView extends HorizontalLayout implements View {
 	}
 
 	private void filtering() {
-		Set<VO> vosSet = vos.getValue();
-		Set<Service> servicesSet = services.getValue();
-		Set<Image> imagesSet = images.getValue();
+		VO vo = vos.getValue();
+		Service service = services.getValue();
+		Image image = images.getValue();
 
-		if (vosSet.isEmpty() && servicesSet.isEmpty() && imagesSet.isEmpty()) {
+		if (vo == null && service == null && image == null) {
 			vosProvider.setFilter(null);
 			servicesProvider.setFilter(null);
 			imagesProvider.setFilter(null);
 		} else {
-			vosProvider.setFilter(vo -> {
+			vosProvider.setFilter(selectedVO -> {
 				Collection<Service> servicesCollection;
-				if (servicesSet.isEmpty()) {
+				if (service == null) {
 					servicesCollection = servicesList;
 				} else {
-					servicesCollection = servicesSet;
+					servicesCollection = Collections.singleton(service);
 				}
 
 				for (Service s: servicesCollection) {
-					if (!Collections.disjoint(s.getAppliances(), vo.getImages())) {
-						if (imagesSet.isEmpty() || !Collections.disjoint(imagesSet, vo.getImages())) {
+					if (!Collections.disjoint(s.getAppliances(), selectedVO.getImages())) {
+						if (image == null || selectedVO.getImages().contains(image) ) {
 							return true;
 						}
 					}
@@ -160,12 +176,12 @@ public class ChooseView extends HorizontalLayout implements View {
 
 				return false;
 			});
-			servicesProvider.setFilter(service -> {
-				if (vosSet.isEmpty()) {
-					return imagesSet.isEmpty() || !Collections.disjoint(imagesSet, service.getAppliances());
-				} else if (imagesSet.isEmpty() || !Collections.disjoint(imagesSet, service.getAppliances())) {
-					for (Image i: service.getAppliances()) {
-						if (vosSet.contains(i.getVo())) {
+			servicesProvider.setFilter(selectedService -> {
+				if (vo == null) {
+					return image == null || selectedService.getAppliances().contains(image);
+				} else if (image == null || selectedService.getAppliances().contains(image)) {
+					for (Image i: selectedService.getAppliances()) {
+						if (vo == i.getVo()) {
 							return true;
 						}
 					}
@@ -173,27 +189,25 @@ public class ChooseView extends HorizontalLayout implements View {
 
 				return false;
 			});
-			imagesProvider.setFilter(image -> {
-				if (servicesSet.isEmpty()) {
-					if (vosSet.isEmpty()) {
+			imagesProvider.setFilter(selectedImage -> {
+				if (service == null) {
+					if (vo == null) {
 						return true;
 					} else {
 						for (Image i: imagesFullList) {
-							if (i.equals(image) && vosSet.contains(i.getVo())) {
+							if (i.equals(selectedImage) && vo == i.getVo()) {
 								return true;
 							}
 						}
 					}
 				} else {
-					for (Service s: servicesSet) {
-						if (s.getAppliances().contains(image)) {
-							if (vosSet.isEmpty()) {
-								return true;
-							} else {
-								for (Image i: imagesFullList) {
-									if (i.equals(image) && vosSet.contains(i.getVo())) {
-										return true;
-									}
+					if (service.getAppliances().contains(selectedImage)) {
+						if (vo == null) {
+							return true;
+						} else {
+							for (Image i: imagesFullList) {
+								if (i.equals(selectedImage) && vo == i.getVo() && service == i.getService()) {
+									return true;
 								}
 							}
 						}
@@ -212,13 +226,13 @@ public class ChooseView extends HorizontalLayout implements View {
 	public String getURLParams() {
 		StringBuilder builder = new StringBuilder("#!create/");
 		try {
-			Service s = services.getValue().iterator().next();
+			Service s = services.getValue();
 
-			Image i = images.getValue().iterator().next();
+			Image i = images.getValue();
 			builder.append("image/");
 			Image imageToSend = i;
 			for (Image img: imagesMap.get(i.getAppDBIdentifier())) {
-				if (img.getService() == s && img.getVo() == vos.getValue().iterator().next()) {
+				if (img.getService() == s && img.getVo() == vos.getValue()) {
 					imageToSend = img;
 					break;
 				}
@@ -226,7 +240,7 @@ public class ChooseView extends HorizontalLayout implements View {
 			builder.append(URLEncoder.encode(imageToSend.getId().toString(), "UTF-8"));
 			builder.append("&");
 
-			Flavour f = flavours.getValue().iterator().next();
+			Flavour f = flavours.getValue();
 			builder.append("flavour/");
 			builder.append(URLEncoder.encode(f.getName().toString(), "UTF-8"));
 			builder.append("&");
@@ -247,9 +261,10 @@ public class ChooseView extends HorizontalLayout implements View {
 		public boolean getCompleted() {
 			ChooseView source = (ChooseView) getSource();
 
-			for (int i = 0; i < source.getComponentCount(); i++) {
-				CheckBoxGroup boxGroup = (CheckBoxGroup) ((Panel) source.getComponent(i)).getContent();
-				if (boxGroup.getValue().size() != 1) {
+			// -1 to remove the button
+			for (int i = 0; i < source.getComponentCount() - 1; i++) {
+				RadioButtonGroup boxGroup = (RadioButtonGroup) ((Panel) source.getComponent(i)).getContent();
+				if (boxGroup.getValue() == null) {
 					return false;
 				}
 			}
