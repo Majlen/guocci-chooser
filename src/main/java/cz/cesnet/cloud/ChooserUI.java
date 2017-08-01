@@ -8,6 +8,7 @@ import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.navigator.Navigator;
 import com.vaadin.server.Page;
+import com.vaadin.server.Resource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
@@ -16,28 +17,25 @@ import com.vaadin.ui.themes.ValoTheme;
 @Theme("valo")
 @Title("GUOCCI")
 public class ChooserUI extends UI {
+	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
 	private Navigator navigator;
+	private HorizontalLayout breadcrumbs;
 
 	@Override
 	protected void init(VaadinRequest vaadinRequest) {
 		Label guocci = new Label("OCCI Web Interface");
 		guocci.addStyleName(ValoTheme.LABEL_HUGE);
 
-		Button nextButton = new Button("Continue", VaadinIcons.ANGLE_RIGHT);
-		nextButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-		nextButton.setEnabled(false);
+		breadcrumbs = new HorizontalLayout();
+		removeButtons();
+		addButton("Choose", Page.getCurrent().getLocation().toString());
 
-		Button prevButton = new Button("Back", VaadinIcons.ANGLE_LEFT);
-		if (vaadinRequest.getHeader("referrer") != null) {
-			prevButton.setEnabled(false);
-		} else {
-			prevButton.setEnabled(true);
-		}
 
-		HorizontalLayout titleBar = new HorizontalLayout(prevButton, guocci, nextButton);
+		HorizontalLayout titleBar = new HorizontalLayout(breadcrumbs, guocci);
 		titleBar.setExpandRatio(guocci, 1);
-		titleBar.setComponentAlignment(guocci, Alignment.MIDDLE_CENTER);
+		titleBar.setComponentAlignment(guocci, Alignment.MIDDLE_RIGHT);
 		titleBar.setWidth("100%");
+		titleBar.setMargin(false);
 
 		Panel content = new Panel();
 		content.addStyleName(ValoTheme.PANEL_BORDERLESS);
@@ -47,13 +45,45 @@ public class ChooserUI extends UI {
 		navigator = new Navigator(this, content);
 		navigator.addView("", choose);
 
-		nextButton.addClickListener(clickEvent -> Page.getCurrent().open("/guocci/" + choose.getURLParams(), null));
-		choose.addCompletedListener(event -> nextButton.setEnabled(event.getCompleted()));
+		navigator.addViewChangeListener(viewChangeEvent -> {
+			removeButtons();
+			addButton("Choose", Page.getCurrent().getLocation().toString());
+			return true;
+		});
 
-		prevButton.addClickListener(clickEvent -> Page.getCurrent().open(vaadinRequest.getHeader("referrer"), null));
 
 		VerticalLayout layout = new VerticalLayout(titleBar, content);
 		setContent(layout);
+	}
+
+	public void addButton(Resource r, String link) {
+		addNecessaryArrow();
+		Button b = new Button(r);
+		b.addClickListener(clickEvent -> Page.getCurrent().open(link, null));
+		b.addStyleName(ValoTheme.BUTTON_QUIET);
+		breadcrumbs.addComponent(b);
+	}
+
+	public void addButton(String s, String link) {
+		addNecessaryArrow();
+		Button b = new Button(s);
+		b.addStyleName(ValoTheme.BUTTON_QUIET);
+		b.addClickListener(clickEvent -> Page.getCurrent().open(link, null));
+		breadcrumbs.addComponent(b);
+	}
+
+	private void addNecessaryArrow() {
+		if (breadcrumbs.getComponentCount() > 0) {
+			Button arrow = new Button(VaadinIcons.ANGLE_RIGHT);
+			arrow.addStyleName(ValoTheme.BUTTON_BORDERLESS);
+			arrow.setEnabled(false);
+			breadcrumbs.addComponent(arrow);
+		}
+	}
+
+	private void removeButtons() {
+		breadcrumbs.removeAllComponents();
+		addButton(VaadinIcons.HOME, GUOCCI_URL);
 	}
 
 	@WebServlet(urlPatterns = "/*", name = "GUOCCI chooser", asyncSupported = true)
