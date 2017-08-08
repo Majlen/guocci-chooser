@@ -43,9 +43,6 @@ public class OCCI implements ResourceAdapter {
 				if (n.getTerm().equals("resource_tpl")) {
 					Flavour f = new Flavour();
 					try {
-						//f.setCpu(Integer.parseInt(m.getAttribute("occi.compute.cores").getDefaultValue()));
-						//f.setVcpu(Integer.parseInt(m.getAttribute("occi.compute.cores").getDefaultValue()));
-						//f.setMemory(Integer.parseInt(m.getAttribute("occi.compute.memory").getDefaultValue()));
 						f.setId(m.getTerm());
 						f.setName(m.getLocation());
 					} catch (Exception e) {
@@ -56,8 +53,6 @@ public class OCCI implements ResourceAdapter {
 					Image i = new Image();
 					i.setName(m.getTitle());
 					i.setId(m.getLocation());
-					//i.setMpuri(URI.create(""));
-					//i.setVo(new VO());
 					images.add(i);
 				}
 			}
@@ -72,17 +67,5 @@ public class OCCI implements ResourceAdapter {
 	public Model getModel() {
 		return model;
 	}
-
-	/*public Set<Kind> getKinds() {
-		return model.getKinds();
-	}
-
-	public Set<Mixin> getMixins() {
-		return model.getMixins();
-	}
-
-	public Set<Action> getActions() {
-		return model.getActions();
-	}*/
 
 }

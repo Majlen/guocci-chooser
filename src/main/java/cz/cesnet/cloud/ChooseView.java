@@ -27,24 +27,20 @@ import java.util.*;
 public class ChooseView extends HorizontalLayout implements View {
 	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
 
-	//private final CheckBoxGroup<VO> vos = new CheckBoxGroup<>();
 	private final RadioButtonGroup<VO> vos = new RadioButtonGroup<>();
 	private LinkedList<VO> vosList = new LinkedList<>();
 	private ListDataProvider<VO> vosProvider = new ListDataProvider<>(vosList);
 
-	//private final CheckBoxGroup<Service> services = new CheckBoxGroup<>();
 	private final RadioButtonGroup<Service> services = new RadioButtonGroup<>();
 	private LinkedList<Service> servicesList = new LinkedList<>();
 	private ListDataProvider<Service> servicesProvider = new ListDataProvider<>(servicesList);
 
-	//private final CheckBoxGroup<Image> images = new CheckBoxGroup<>();
 	private final RadioButtonGroup<Image> images = new RadioButtonGroup<>();
 	private Map<String, List<Image>> imagesMap;
 	private LinkedList<Image> imagesList = new LinkedList<>();
 	private LinkedList<Image> imagesFullList = new LinkedList<>();
 	private ListDataProvider<Image> imagesProvider = new ListDataProvider<>(imagesList);
 
-	//private final CheckBoxGroup<Flavour> flavours = new CheckBoxGroup<>();
 	private final RadioButtonGroup<Flavour> flavours = new RadioButtonGroup<>();
 	private LinkedList<Flavour> flavoursList = new LinkedList<>();
 	private ListDataProvider<Flavour> flavoursProvider = new ListDataProvider<>(flavoursList);
@@ -52,72 +48,70 @@ public class ChooseView extends HorizontalLayout implements View {
 	private ResourceAdapter res;
 
 	public ChooseView() {
-		res = null;
 		try {
-			if (true) {
-				res = new AppDB();
-			} else {
-				res = new OCCI();
+			switch (configuration.getResource()) {
+				case "AppDB":
+					res = new AppDB();
+					break;
+				case "OCCI":
+					res = new OCCI();
+					break;
 			}
+
+			vos.setDataProvider(vosProvider);
+			services.setDataProvider(servicesProvider);
+			images.setDataProvider(imagesProvider);
+			flavours.setDataProvider(flavoursProvider);
+
+			vos.addValueChangeListener(valueChangeEvent -> filtering());
+			services.addValueChangeListener(valueChangeEvent -> filtering());
+			images.addValueChangeListener(valueChangeEvent -> filtering());
+
+			services.addValueChangeListener(valueChangeEvent -> {
+				System.out.println(valueChangeEvent.getValue());
+				if (valueChangeEvent.getValue() != null) {
+					flavoursList.addAll(valueChangeEvent.getValue().getFlavours());
+					flavoursProvider.refreshAll();
+				} else {
+					flavours.setSelectedItem(null);
+					flavoursList.clear();
+					flavoursProvider.refreshAll();
+				}
+			});
+
+			vos.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
+			services.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
+			images.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
+			flavours.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
+
+			Button nextButton = new Button("Continue", VaadinIcons.ANGLE_RIGHT);
+			nextButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
+			nextButton.setEnabled(false);
+
+			nextButton.addClickListener(clickEvent -> Page.getCurrent().open(GUOCCI_URL + getURLParams(), null));
+			addCompletedListener(event -> nextButton.setEnabled(event.getCompleted()));
+
+			final Panel vosPanel = new Panel("Virtual organizations", vos);
+			final Panel servicesPanel = new Panel("Service sites", services);
+			final Panel imagesPanel = new Panel("Image templates", images);
+			final Panel flavoursPanel = new Panel("Flavours", flavours);
+
+			if (res instanceof AppDB) {
+				addComponent(vosPanel);
+				addComponent(servicesPanel);
+			}
+			addComponent(imagesPanel);
+			addComponent(flavoursPanel);
+			addComponent(nextButton);
 		} catch (SAXException e) {
 			System.out.println("Error in XML parsing: " + e);
-			return;
 		} catch (ParserConfigurationException e) {
 			System.out.println("Error configuring XML parser: " + e);
-			return;
 		} catch (IOException e) {
 			System.out.println("Error reading AppDB: " + e);
-			return;
 		} catch (CommunicationException e) {
 			System.out.println("Error reading OCCI: " + e);
 		}
-
-
-		vos.setDataProvider(vosProvider);
-		services.setDataProvider(servicesProvider);
-		images.setDataProvider(imagesProvider);
-		flavours.setDataProvider(flavoursProvider);
-
-		vos.addValueChangeListener(valueChangeEvent -> filtering());
-		services.addValueChangeListener(valueChangeEvent -> filtering());
-		images.addValueChangeListener(valueChangeEvent -> filtering());
-
-		services.addValueChangeListener(valueChangeEvent -> {
-			System.out.println(valueChangeEvent.getValue());
-			if (valueChangeEvent.getValue() != null) {
-				flavoursList.addAll(valueChangeEvent.getValue().getFlavours());
-				flavoursProvider.refreshAll();
-			} else {
-				flavours.setSelectedItem(null);
-				flavoursList.clear();
-				flavoursProvider.refreshAll();
-			}
-		});
-
-		vos.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
-		services.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
-		images.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
-		flavours.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
-
-		Button nextButton = new Button("Continue", VaadinIcons.ANGLE_RIGHT);
-		nextButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
-		nextButton.setEnabled(false);
-
-		nextButton.addClickListener(clickEvent -> Page.getCurrent().open(GUOCCI_URL + getURLParams(), null));
-		addCompletedListener(event -> nextButton.setEnabled(event.getCompleted()));
-
-		final Panel vosPanel = new Panel("Virtual organizations", vos);
-		final Panel servicesPanel = new Panel("Service sites", services);
-		final Panel imagesPanel = new Panel("Image templates", images);
-		final Panel flavoursPanel = new Panel("Flavours", flavours);
-
-		if (res instanceof AppDB) {
-			addComponent(vosPanel);
-			addComponent(servicesPanel);
-		}
-		addComponent(imagesPanel);
-		addComponent(flavoursPanel);
-		addComponent(nextButton);
 	}
 
 	@Override
