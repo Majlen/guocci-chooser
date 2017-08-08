@@ -6,6 +6,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -31,6 +33,8 @@ public class AppDB implements ResourceAdapter {
 	final static private String APPDB_APPLICATION_NS = "http://appdb.egi.eu/api/1.0/application";
 	final static private String APPDB_VO_NS = "http://appdb.egi.eu/api/1.0/vo";
 
+	private static final Logger logger = LoggerFactory.getLogger(AppDB.class);
+
 	private Model model;
 	private Map<String, List<Image>> images;
 	private List<VO> vos;
@@ -44,7 +48,7 @@ public class AppDB implements ResourceAdapter {
 		HttpGet get = new HttpGet(endpoint);
 
 		HttpResponse response = http.execute(get);
-		System.out.println(response.getStatusLine());
+		logger.debug(response.getStatusLine().toString());
 		HttpEntity entity = response.getEntity();
 
 		images = new HashMap<>();
@@ -57,7 +61,7 @@ public class AppDB implements ResourceAdapter {
 	}
 
 	private void parseXML(InputStream xmlStream) throws IOException, ParserConfigurationException, SAXException {
-		System.out.println("Started XML parsing");
+		logger.debug("Started XML parsing");
 		Reader r = new InputStreamReader(xmlStream, Charset.defaultCharset());
 		InputSource s = new InputSource(r);
 
@@ -77,21 +81,24 @@ public class AppDB implements ResourceAdapter {
 				try {
 					services.add(parseService(e));
 				} catch (Exception ex) {
-					System.out.println("Cannot parse service, reason: " + ex.getMessage());
+					logger.warn("Cannot parse service, reason.", ex);
 				}
 			}
 		}
 		model = new Model(services, images, vos);
+		logger.debug("Finished XML parsing");
 	}
 
 	private Service parseService(Element service) {
 		Element site = (Element) service.getParentNode();
+		logger.debug("Parsing service {}", site.getAttribute("name"));
 		Service s = new Service();
 		s.setName(site.getAttribute("name"));
 		s.setCountry(((Element) (site.getElementsByTagNameNS(APPDB_REGIONAL_NS, "country").item(0))).getAttribute("isocode"));
 		s.setEndpoint(URI.create(service.getElementsByTagNameNS(APPDB_SITE_NS, "occi_endpoint_url").item(0).getTextContent()));
 		s.setSite_id(site.getAttribute("id"));
 		s.setService_id(service.getAttribute("id"));
+
 
 		NodeList flavour_nodes = service.getElementsByTagNameNS(APPDB_PROVIDER_NS, "template");
 		List<Flavour> flavours = new LinkedList<>();
@@ -128,6 +135,7 @@ public class AppDB implements ResourceAdapter {
 	}
 
 	private Flavour parseFlavour(Element template) {
+		logger.debug("Parsing flavour {}", template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_name").item(0).getTextContent());
 		Flavour f = new Flavour();
 		f.setId(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_id").item(0).getTextContent());
 		f.setName(URI.create(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_name").item(0).getTextContent()));
@@ -143,6 +151,7 @@ public class AppDB implements ResourceAdapter {
 		if (parent.getAttribute("isexpired").equals("true")) {
 			return null;
 		}
+		logger.debug("Parsing image {}", parent.getElementsByTagNameNS(APPDB_APPLICATION_NS, "name").item(0).getTextContent());
 
 		Image i = new Image();
 		Element vo = (Element) image.getElementsByTagNameNS(APPDB_VO_NS, "vo").item(0);
@@ -160,6 +169,7 @@ public class AppDB implements ResourceAdapter {
 	}
 
 	private VO parseVO(Element e) {
+		logger.debug("Parsing VO {}", e == null ? "null" : e.getAttribute("name"));
 		VO vo = new VO();
 		if (e != null) {
 			vo.setId(Integer.parseInt(e.getAttribute("id")));

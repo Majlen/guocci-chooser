@@ -15,6 +15,8 @@ import cz.cesnet.cloud.sources.*;
 import cz.cesnet.cloud.sources.Image;
 import cz.cesnet.cloud.sources.appdb.AppDB;
 import cz.cesnet.cloud.sources.occi.OCCI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -26,6 +28,8 @@ import java.net.URLEncoder;
 import java.util.*;
 
 public class ChooseView extends HorizontalLayout implements View {
+	private static final Logger logger = LoggerFactory.getLogger(ChooseView.class);
+
 	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
 
 	private final RadioButtonGroup<VO> vos = new RadioButtonGroup<>();
@@ -71,7 +75,6 @@ public class ChooseView extends HorizontalLayout implements View {
 			images.addValueChangeListener(valueChangeEvent -> filtering());
 
 			services.addValueChangeListener(valueChangeEvent -> {
-				System.out.println(valueChangeEvent.getValue());
 				if (valueChangeEvent.getValue() != null) {
 					flavoursList.addAll(valueChangeEvent.getValue().getFlavours());
 					flavoursProvider.refreshAll();
@@ -107,13 +110,13 @@ public class ChooseView extends HorizontalLayout implements View {
 			addComponent(flavoursPanel);
 			addComponent(nextButton);
 		} catch (SAXException e) {
-			System.out.println("Error in XML parsing: " + e);
+			logger.error("Error in XML parsing.", e);
 		} catch (ParserConfigurationException e) {
-			System.out.println("Error configuring XML parser: " + e);
+			logger.error("Error configuring XML parser.", e);
 		} catch (IOException e) {
-			System.out.println("Error reading AppDB: " + e);
+			logger.error("Error reading AppDB.", e);
 		} catch (CommunicationException e) {
-			System.out.println("Error reading OCCI: " + e);
+			logger.error("Error reading OCCI.", e);
 		}
 	}
 
@@ -242,7 +245,7 @@ public class ChooseView extends HorizontalLayout implements View {
 			builder.append(URLEncoder.encode(f.getName().toString(), "UTF-8"));
 			builder.append("&");
 		} catch (UnsupportedEncodingException e) {
-			//Should not happen, UTF-8 should be supported everywhere
+			logger.error("UTF-8 is unsupported! Should never happen.", e);
 		}
 
 		builder.deleteCharAt(builder.lastIndexOf("&"));

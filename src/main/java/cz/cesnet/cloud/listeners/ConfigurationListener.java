@@ -1,6 +1,8 @@
 package cz.cesnet.cloud.listeners;
 
 import cz.cesnet.cloud.sources.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -13,6 +15,8 @@ import java.util.Properties;
 
 @WebListener
 public class ConfigurationListener implements ServletContextListener {
+	private static final Logger logger = LoggerFactory.getLogger(ConfigurationListener.class);
+
 	//This is not everything (defaults will be loaded from .war
 	private static final String[] RESOURCE_FILES = {"/etc/guocci/config.properties"};
 
@@ -24,16 +28,16 @@ public class ConfigurationListener implements ServletContextListener {
 		try {
 			properties.load(context.getResourceAsStream("/config.properties"));
 		} catch (IOException e) {
-			System.out.println("Error reading default config file !");
+			logger.error("Error reading default config file.", e);
 		}
 
 		for (String resource: RESOURCE_FILES) {
 			try {
 				properties.load(new FileInputStream(resource));
 			} catch (FileNotFoundException e) {
-				System.out.println("Config file " + resource + " was not found!");
+				logger.warn("Config file {} not found.", resource);
 			} catch (IOException e) {
-				System.out.println("Error reading config file " + resource + "!");
+				logger.error("Error reading config file {}: {}", resource, e.getMessage());
 			}
 		}
 

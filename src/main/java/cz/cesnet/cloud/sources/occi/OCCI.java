@@ -5,18 +5,18 @@ import cz.cesnet.cloud.occi.api.exception.CommunicationException;
 import cz.cesnet.cloud.occi.api.http.HTTPClient;
 import cz.cesnet.cloud.occi.api.http.auth.HTTPAuthentication;
 import cz.cesnet.cloud.occi.api.http.auth.VOMSAuthentication;
-import cz.cesnet.cloud.occi.core.Action;
-import cz.cesnet.cloud.occi.core.Kind;
 import cz.cesnet.cloud.occi.core.Mixin;
 import cz.cesnet.cloud.sources.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 
 public class OCCI implements ResourceAdapter {
+	private static final Logger logger = LoggerFactory.getLogger(OCCI.class);
+
 	private HTTPAuthentication auth;
 	private Model model;
 	private URI endpoint;
@@ -49,7 +49,7 @@ public class OCCI implements ResourceAdapter {
 						f.setId(m.getTerm());
 						f.setName(m.getLocation());
 					} catch (Exception e) {
-						System.out.println("Exception parsing flavour: " + e);
+						logger.error("Exception parsing flavour.", e);
 					}
 					flavours.add(f);
 				} else if (n.getTerm().equals("os_tpl")) {

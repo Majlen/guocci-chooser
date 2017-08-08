@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Appenders>
+		<File name="GUOCCI log" fileName="${sys:catalina.base}/logs/guocci_chooser.log">
+			<PatternLayout pattern="%date{DEFAULT} [%thread] %-5level %logger{3.} - %msg%n"/>
+		</File>
+		<File name="GUOCCI misc log" fileName="${sys:catalina.base}/logs/guocci_chooser-misc.log">
+			<PatternLayout pattern="%date{DEFAULT} [%thread] %-5level %logger{3.} - %msg%n"/>
+		</File>
+		<File name="GUOCCI jocci log" fileName="${sys:catalina.base}/logs/guocci_chooser-jocci.log">
+			<PatternLayout pattern="%date{DEFAULT} [%thread] %-5level %logger{3.} - %msg%n"/>
+		</File>
+	</Appenders>
+	<Loggers>
+		<Logger name="cz.cesnet.cloud.occi" level="WARN" additivity="false">
+			<AppenderRef ref="GUOCCI jocci log"/>
+		</Logger>
+		<Logger name="cz.cesnet.cloud" level="DEBUG" additivity="false">
+			<AppenderRef ref="GUOCCI log"/>
+		</Logger>
+		<Root level="WARN">
+			<AppenderRef ref="GUOCCI misc log"/>
+		</Root>
+	</Loggers>
+</Configuration>
