@@ -5,6 +5,7 @@ import com.vaadin.icons.VaadinIcons;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener;
 import com.vaadin.server.Page;
+import com.vaadin.server.VaadinServlet;
 import com.vaadin.shared.Registration;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
@@ -48,13 +49,15 @@ public class ChooseView extends HorizontalLayout implements View {
 	private ResourceAdapter res;
 
 	public ChooseView() {
+		Configuration configuration = (Configuration) VaadinServlet.getCurrent().getServletContext().getAttribute("configuration");
+
 		try {
 			switch (configuration.getResource()) {
 				case "AppDB":
-					res = new AppDB();
+					res = new AppDB(configuration);
 					break;
 				case "OCCI":
-					res = new OCCI();
+					res = new OCCI(configuration);
 					break;
 			}
 

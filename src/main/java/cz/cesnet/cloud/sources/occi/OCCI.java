@@ -13,6 +13,7 @@ import cz.cesnet.cloud.sources.*;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 public class OCCI implements ResourceAdapter {
@@ -20,14 +21,16 @@ public class OCCI implements ResourceAdapter {
 	private Model model;
 	private URI endpoint;
 
-	public OCCI() throws CommunicationException {
-		this("/tmp/x509up_u1000", URI.create("https://carach5.ics.muni.cz:11443"));
+	public static String certPath = "/tmp/x509up_u1000";
+
+	public OCCI(Configuration configuration) throws CommunicationException {
+		this(certPath, configuration.getSourceURI(), configuration.getAuthCAPath());
 	}
 
-	public OCCI(String certificate, URI endpoint) throws CommunicationException {
+	public OCCI(String certificate, URI endpoint, String CAPath) throws CommunicationException {
 		this.endpoint = endpoint;
 		auth = new VOMSAuthentication(certificate);
-		auth.setCAPath("/etc/grid-security/certificates");
+		auth.setCAPath(CAPath);
 		Client client = new HTTPClient(endpoint, auth);
 
 		cz.cesnet.cloud.occi.Model occiModel = client.getModel();

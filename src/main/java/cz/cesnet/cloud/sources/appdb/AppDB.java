@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 public class AppDB implements ResourceAdapter {
-	final static private String APPDB_URL = "https://appdb.egi.eu/rest/1.0/sites?listmode=details&flt=%2B%3Dsite.supports%3A1%20%2B%3Dsite.hasinstances%3A1%0A";
-
 	final static private String APPDB_NS = "http://appdb.egi.eu/api/1.0/appdb";
 	final static private String APPDB_SITE_NS = "http://appdb.egi.eu/api/1.0/site";
 	final static private String APPDB_REGIONAL_NS = "http://appdb.egi.eu/api/1.0/regional";
@@ -37,8 +35,8 @@ public class AppDB implements ResourceAdapter {
 	private Map<String, List<Image>> images;
 	private List<VO> vos;
 
-	public AppDB() throws IOException, ParserConfigurationException, SAXException {
-		this(URI.create(APPDB_URL));
+	public AppDB(Configuration configuration) throws IOException, ParserConfigurationException, SAXException {
+		this(configuration.getSourceURI());
 	}
 
 	public AppDB(URI endpoint) throws IOException, ParserConfigurationException, SAXException {
