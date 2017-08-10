@@ -26,7 +26,7 @@ public class ConfigurationListener implements ServletContextListener {
 		ServletContext context = servletContextEvent.getServletContext();
 
 		try {
-			properties.load(context.getResourceAsStream("/config.properties"));
+			properties.load(this.getClass().getClassLoader().getResourceAsStream("config.properties"));
 		} catch (IOException e) {
 			logger.error("Error reading default config file.", e);
 		}
