@@ -58,7 +58,7 @@ public class ChooseView extends HorizontalLayout implements View {
 		try {
 			switch (configuration.getResource()) {
 				case "AppDB":
-					res = new AppDB(configuration);
+					res = AppDB.getAppDB(configuration);
 					break;
 				case "OCCI":
 					res = new OCCI(configuration);
@@ -109,12 +109,6 @@ public class ChooseView extends HorizontalLayout implements View {
 			addComponent(imagesPanel);
 			addComponent(flavoursPanel);
 			addComponent(nextButton);
-		} catch (SAXException e) {
-			logger.error("Error in XML parsing.", e);
-		} catch (ParserConfigurationException e) {
-			logger.error("Error configuring XML parser.", e);
-		} catch (IOException e) {
-			logger.error("Error reading AppDB.", e);
 		} catch (CommunicationException e) {
 			logger.error("Error reading OCCI.", e);
 		}

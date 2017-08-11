@@ -13,6 +13,7 @@
 		<vaadin.version>8.1.1</vaadin.version>
 		<vaadin.plugin.version>8.1.1</vaadin.plugin.version>
 		<log4j.version>2.8.2</log4j.version>
+		<cache2k.version>1.0.0.Final</cache2k.version>
 		<jetty.plugin.version>9.3.9.v20160517</jetty.plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -50,6 +51,17 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>${log4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cache2k</groupId>
+			<artifactId>cache2k-api</artifactId>
+			<version>${cache2k.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cache2k</groupId>
+			<artifactId>cache2k-core</artifactId>
+			<version>${cache2k.version}</version>
 		</dependency>
 
 		<dependency>

@@ -40,10 +40,8 @@ public class ChooserUI extends UI {
 		Panel content = new Panel();
 		content.addStyleName(ValoTheme.PANEL_BORDERLESS);
 
-		ChooseView choose = new ChooseView();
-
 		navigator = new Navigator(this, content);
-		navigator.addView("", choose);
+		navigator.addView("", new ChooseView());
 
 		navigator.addViewChangeListener(viewChangeEvent -> {
 			removeButtons();

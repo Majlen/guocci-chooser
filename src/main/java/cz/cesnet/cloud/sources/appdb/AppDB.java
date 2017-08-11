@@ -6,6 +6,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.cache2k.Cache;
+import org.cache2k.Cache2kBuilder;
+import org.cache2k.configuration.Cache2kConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -23,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class AppDB implements ResourceAdapter {
 	final static private String APPDB_NS = "http://appdb.egi.eu/api/1.0/appdb";
@@ -35,32 +39,55 @@ public class AppDB implements ResourceAdapter {
 
 	private static final Logger logger = LoggerFactory.getLogger(AppDB.class);
 
-	private Model model;
+	private static AppDB appDB = null;
+
+	//private Model model;
 	private Map<String, List<Image>> images;
 	private List<VO> vos;
+	private URI endpoint;
+	private Cache<Integer, Model> cache;
 
-	public AppDB(Configuration configuration) throws IOException, ParserConfigurationException, SAXException {
-		this(configuration.getSourceURI());
+	public static AppDB getAppDB(Configuration configuration) {
+		if (appDB == null) {
+			appDB = new AppDB(configuration);
+		}
+		return appDB;
 	}
 
-	public AppDB(URI endpoint) throws IOException, ParserConfigurationException, SAXException {
+	private AppDB(Configuration configuration) {
+		this(configuration.getSourceURI());
+		cache = Cache2kBuilder.of(new Cache2kConfiguration<Integer, Model>())
+				.expireAfterWrite(configuration.getCacheRefresh(), TimeUnit.SECONDS)
+				.resilienceDuration(configuration.getCacheResilience(), TimeUnit.SECONDS)
+				.refreshAhead(true)
+				.loader(this::refreshXML)
+				.build();
+	}
+
+	private AppDB(URI endpoint) {
+		this.endpoint = endpoint;
+	}
+
+	public Model getModel() {
+		return cache.get(0);
+	}
+
+	private Model refreshXML(int cacheKey) throws IOException, ParserConfigurationException, SAXException {
+		//cacheKey is unused, all data are global for all users (AppDB is not authenticated
 		HttpClient http = HttpClients.createDefault();
-		HttpGet get = new HttpGet(endpoint);
+		HttpGet get = new HttpGet(this.endpoint);
 
 		HttpResponse response = http.execute(get);
 		logger.debug(response.getStatusLine().toString());
 		HttpEntity entity = response.getEntity();
 
+		return parseXML(entity.getContent());
+	}
+
+	private Model parseXML(InputStream xmlStream) throws IOException, ParserConfigurationException, SAXException {
 		images = new HashMap<>();
 		vos = new LinkedList<>();
-		parseXML(entity.getContent());
-	}
 
-	public Model getModel() {
-		return model;
-	}
-
-	private void parseXML(InputStream xmlStream) throws IOException, ParserConfigurationException, SAXException {
 		logger.debug("Started XML parsing");
 		Reader r = new InputStreamReader(xmlStream, Charset.defaultCharset());
 		InputSource s = new InputSource(r);
@@ -85,8 +112,9 @@ public class AppDB implements ResourceAdapter {
 				}
 			}
 		}
-		model = new Model(services, images, vos);
+
 		logger.debug("Finished XML parsing");
+		return new Model(services, images, vos);
 	}
 
 	private Service parseService(Element service) {
