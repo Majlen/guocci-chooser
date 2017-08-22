@@ -9,6 +9,7 @@ public class Configuration {
 	private final static String AUTH_CA_PATH_PROPERTY = "guocci.chooser.occi.x509.capath";
 	private final static String CACHE_REFRESH_PROPERTY = "guocci.chooser.cache.refresh";
 	private final static String CACHE_RESILIENCE_PROPERTY = "guocci.chooser.cache.resilience";
+	private final static String MAIN_GUOCCI_URI = "guocci.chooser.main.uri";
 
 	private Properties properties;
 
@@ -34,5 +35,9 @@ public class Configuration {
 
 	public int getCacheResilience() {
 		return Integer.parseInt(properties.getProperty(CACHE_RESILIENCE_PROPERTY));
+	}
+
+	public String getGuocciURI() {
+		return properties.getProperty(MAIN_GUOCCI_URI);
 	}
 }

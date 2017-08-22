@@ -30,8 +30,6 @@ import java.util.*;
 public class ChooseView extends HorizontalLayout implements View {
 	private static final Logger logger = LoggerFactory.getLogger(ChooseView.class);
 
-	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
-
 	private final RadioButtonGroup<VO> vos = new RadioButtonGroup<>();
 	private LinkedList<VO> vosList = new LinkedList<>();
 	private ListDataProvider<VO> vosProvider = new ListDataProvider<>(vosList);
@@ -94,7 +92,7 @@ public class ChooseView extends HorizontalLayout implements View {
 			nextButton.addStyleName(ValoTheme.BUTTON_ICON_ALIGN_RIGHT);
 			nextButton.setEnabled(false);
 
-			nextButton.addClickListener(clickEvent -> Page.getCurrent().open(GUOCCI_URL + getURLParams(), null));
+			nextButton.addClickListener(clickEvent -> Page.getCurrent().open(configuration.getGuocciURI() + getURLParams(), null));
 			addCompletedListener(event -> nextButton.setEnabled(event.getCompleted()));
 
 			final Panel vosPanel = new Panel("Virtual organizations", vos);

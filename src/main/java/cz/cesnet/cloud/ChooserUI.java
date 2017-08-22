@@ -13,11 +13,11 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.*;
 import com.vaadin.ui.themes.ValoTheme;
+import cz.cesnet.cloud.sources.Configuration;
 
 @Theme("valo")
 @Title("GUOCCI")
 public class ChooserUI extends UI {
-	private final String GUOCCI_URL = "http://localhost:8080/guocci/";
 	private Navigator navigator;
 	private HorizontalLayout breadcrumbs;
 
@@ -80,8 +80,9 @@ public class ChooserUI extends UI {
 	}
 
 	private void removeButtons() {
+		Configuration configuration = (Configuration) VaadinServlet.getCurrent().getServletContext().getAttribute("configuration");
 		breadcrumbs.removeAllComponents();
-		addButton(VaadinIcons.HOME, GUOCCI_URL);
+		addButton(VaadinIcons.HOME, configuration.getGuocciURI());
 	}
 
 	@WebServlet(urlPatterns = "/*", name = "GUOCCI chooser", asyncSupported = true)
