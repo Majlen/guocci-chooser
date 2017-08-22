@@ -1,13 +1,11 @@
 package cz.cesnet.cloud.sources;
 
 import java.net.URI;
-import java.util.LinkedList;
-import java.util.List;
 
 public class Image {
 	private URI id;
 	private String name;
-	private String appDBIdentifier;
+	private String key;
 	private int appDBID;
 	private VO vo;
 	private Service service;
@@ -29,12 +27,12 @@ public class Image {
 		this.name = name;
 	}
 
-	public String getAppDBIdentifier() {
-		return appDBIdentifier;
+	public String getKey() {
+		return key;
 	}
 
-	public void setAppDBIdentifier(String appDBIdentifier) {
-		this.appDBIdentifier = appDBIdentifier;
+	public void setKey(String key) {
+		this.key = key;
 	}
 
 	public int getAppDBID() {
@@ -68,7 +66,7 @@ public class Image {
 
 	@Override
 	public int hashCode() {
-		if (appDBIdentifier != null) {
+		if (appDBID != 0) {
 			return appDBID;
 		} else {
 			return name.hashCode();
@@ -78,7 +76,7 @@ public class Image {
 	@Override
 	public boolean equals(Object object) {
 		if (object != null && object instanceof Image) {
-			if (appDBIdentifier != null) {
+			if (appDBID != 0) {
 				if (this.appDBID == ((Image) object).appDBID) {
 					return true;
 				}

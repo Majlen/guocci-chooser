@@ -41,11 +41,10 @@ public class AppDB implements ResourceAdapter {
 
 	private static AppDB appDB = null;
 
-	//private Model model;
 	private Map<String, List<Image>> images;
 	private List<VO> vos;
 	private URI endpoint;
-	private Cache<Integer, Model> cache;
+	private Cache<String, Model> cache;
 
 	public static AppDB getAppDB(Configuration configuration) {
 		if (appDB == null) {
@@ -56,10 +55,9 @@ public class AppDB implements ResourceAdapter {
 
 	private AppDB(Configuration configuration) {
 		this(configuration.getSourceURI());
-		cache = Cache2kBuilder.of(new Cache2kConfiguration<Integer, Model>())
+		cache = Cache2kBuilder.of(new Cache2kConfiguration<String, Model>())
 				.expireAfterWrite(configuration.getCacheRefresh(), TimeUnit.SECONDS)
 				.resilienceDuration(configuration.getCacheResilience(), TimeUnit.SECONDS)
-				.refreshAhead(true)
 				.loader(this::refreshXML)
 				.build();
 	}
@@ -68,12 +66,12 @@ public class AppDB implements ResourceAdapter {
 		this.endpoint = endpoint;
 	}
 
-	public Model getModel() {
-		return cache.get(0);
+	public Model getModel(String cacheKey) {
+		return cache.get(cacheKey);
 	}
 
-	private Model refreshXML(int cacheKey) throws IOException, ParserConfigurationException, SAXException {
-		//cacheKey is unused, all data are global for all users (AppDB is not authenticated
+	private Model refreshXML(String cacheKey) throws IOException, ParserConfigurationException, SAXException {
+		//cacheKey is unused, all data are global for all users (AppDB is not authenticated)
 		HttpClient http = HttpClients.createDefault();
 		HttpGet get = new HttpGet(this.endpoint);
 
@@ -148,11 +146,11 @@ public class AppDB implements ResourceAdapter {
 		appdbImages.forEach(image -> {
 			image.setService(s);
 
-			if (!images.containsKey(image.getAppDBIdentifier())) {
-				images.put(image.getAppDBIdentifier(), new LinkedList<>());
+			if (!images.containsKey(image.getKey())) {
+				images.put(image.getKey(), new LinkedList<>());
 			}
 
-			List<Image> list = images.get(image.getAppDBIdentifier());
+			List<Image> list = images.get(image.getKey());
 			list.add(image);
 		});
 
@@ -165,8 +163,8 @@ public class AppDB implements ResourceAdapter {
 	private Flavour parseFlavour(Element template) {
 		logger.debug("Parsing flavour {}", template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_name").item(0).getTextContent());
 		Flavour f = new Flavour();
-		f.setId(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_id").item(0).getTextContent());
-		f.setName(URI.create(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_name").item(0).getTextContent()));
+		f.setName(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_id").item(0).getTextContent());
+		f.setId(URI.create(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "resource_name").item(0).getTextContent()));
 		f.setMemory(Integer.parseInt(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "main_memory_size").item(0).getTextContent()));
 		f.setVcpu(Integer.parseInt(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "logical_cpus").item(0).getTextContent()));
 		f.setCpu(Integer.parseInt(template.getElementsByTagNameNS(APPDB_PROVIDER_TEMPLATE_NS, "physical_cpus").item(0).getTextContent()));
@@ -190,7 +188,7 @@ public class AppDB implements ResourceAdapter {
 		org.addImage(i);
 
 		i.setName(parent.getElementsByTagNameNS(APPDB_APPLICATION_NS, "name").item(0).getTextContent());
-		i.setAppDBIdentifier(parent.getAttribute("identifier"));
+		i.setKey(parent.getAttribute("identifier"));
 		i.setAppDBID(Integer.parseInt(parent.getAttribute("id")));
 
 		return i;

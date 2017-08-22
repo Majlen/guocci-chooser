@@ -3,26 +3,35 @@ package cz.cesnet.cloud.sources;
 import java.net.URI;
 
 public class Flavour {
-	private String id;
-	private URI name;
+	private String name;
+	private String title;
+	private URI id;
 	private int memory;
 	private int vcpu;
 	private int cpu;
 
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public URI getName() {
+	public String getName() {
 		return name;
 	}
 
-	public void setName(URI name) {
+	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public URI getId() {
+		return id;
+	}
+
+	public void setId(URI id) {
+		this.id = id;
 	}
 
 	public int getMemory() {
@@ -50,6 +59,10 @@ public class Flavour {
 	}
 
 	public String toString() {
-		return "CPU: " + cpu + "/" + vcpu + ", memory: " + memory + " MB";
+		if (title != null) {
+			return title;
+		} else {
+			return "CPU: " + cpu + "/" + vcpu + ", memory: " + memory + " MB";
+		}
 	}
 }

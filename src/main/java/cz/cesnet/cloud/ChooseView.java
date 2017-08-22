@@ -17,10 +17,7 @@ import cz.cesnet.cloud.sources.appdb.AppDB;
 import cz.cesnet.cloud.sources.occi.OCCI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -59,7 +56,7 @@ public class ChooseView extends HorizontalLayout implements View {
 					res = AppDB.getAppDB(configuration);
 					break;
 				case "OCCI":
-					res = new OCCI(configuration);
+					res = OCCI.getOCCI(configuration);
 					break;
 			}
 
@@ -120,7 +117,11 @@ public class ChooseView extends HorizontalLayout implements View {
 		imagesFullList.clear();
 		flavoursList.clear();
 
-		Model m = res.getModel();
+		String user = "";
+		if (res instanceof OCCI) {
+			user = OCCI.certPath;
+		}
+		Model m = res.getModel(user);
 
 		if (m.getVOs() != null) {
 			vosList.addAll(m.getVOs());
@@ -223,7 +224,7 @@ public class ChooseView extends HorizontalLayout implements View {
 			Image i = images.getValue();
 			builder.append("image/");
 			Image imageToSend = i;
-			for (Image img: imagesMap.get(i.getAppDBIdentifier())) {
+			for (Image img: imagesMap.get(i.getKey())) {
 				if (img.getService() == s && img.getVo() == vos.getValue()) {
 					imageToSend = img;
 					break;
@@ -234,7 +235,7 @@ public class ChooseView extends HorizontalLayout implements View {
 
 			Flavour f = flavours.getValue();
 			builder.append("flavour/");
-			builder.append(URLEncoder.encode(f.getName().toString(), "UTF-8"));
+			builder.append(URLEncoder.encode(f.getId().toString(), "UTF-8"));
 			builder.append("&");
 		} catch (UnsupportedEncodingException e) {
 			logger.error("UTF-8 is unsupported! Should never happen.", e);
