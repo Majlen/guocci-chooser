@@ -10,6 +10,8 @@ Requirements
 * Maven
   * Vaadin 8.1
   * jOCCI libraries (core and API)
+  * SLF4J and Log4J 2 for logging
+  * cache2k
 
 Installation
 ------------
