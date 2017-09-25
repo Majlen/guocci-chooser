@@ -151,64 +151,24 @@ public class ChooseView extends HorizontalLayout implements View {
 			servicesProvider.setFilter(null);
 			imagesProvider.setFilter(null);
 		} else {
-			vosProvider.setFilter(selectedVO -> {
-				Collection<Service> servicesCollection;
-				if (service == null) {
-					servicesCollection = servicesList;
-				} else {
-					servicesCollection = Collections.singleton(service);
-				}
+			vosProvider.setFilter(selectedVO ->
+				servicesList.parallelStream()
+						.filter(s -> service == null || s == service)
+						.filter(s -> !Collections.disjoint(s.getAppliances(), selectedVO.getImages()))
+						.anyMatch(s -> image == null || selectedVO.getImages().contains(image))
 
-				for (Service s: servicesCollection) {
-					if (!Collections.disjoint(s.getAppliances(), selectedVO.getImages())) {
-						if (image == null || selectedVO.getImages().contains(image) ) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			});
-			servicesProvider.setFilter(selectedService -> {
-				if (vo == null) {
-					return image == null || selectedService.getAppliances().contains(image);
-				} else if (image == null || selectedService.getAppliances().contains(image)) {
-					for (Image i: selectedService.getAppliances()) {
-						if (vo == i.getVo()) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			});
-			imagesProvider.setFilter(selectedImage -> {
-				if (service == null) {
-					if (vo == null) {
-						return true;
-					} else {
-						for (Image i: imagesFullList) {
-							if (i.equals(selectedImage) && vo == i.getVo()) {
-								return true;
-							}
-						}
-					}
-				} else {
-					if (service.getAppliances().contains(selectedImage)) {
-						if (vo == null) {
-							return true;
-						} else {
-							for (Image i: imagesFullList) {
-								if (i.equals(selectedImage) && vo == i.getVo() && service == i.getService()) {
-									return true;
-								}
-							}
-						}
-					}
-				}
-
-				return false;
-			});
+			);
+			servicesProvider.setFilter(selectedService ->
+				selectedService.getAppliances().parallelStream()
+						.filter(i -> vo == null || vo == i.getVo())
+						.anyMatch(i -> image == null || i.equals(image))
+			);
+			imagesProvider.setFilter(selectedImage ->
+				imagesFullList.parallelStream()
+						.filter(i -> vo == null || i.getVo() == vo)
+						.filter(i -> service == null || i.getService() == service)
+						.anyMatch(i -> i.equals(selectedImage))
+			);
 		}
 	}
 
