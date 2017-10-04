@@ -16,9 +16,8 @@ public class Model {
 		this.vos = vos;
 	}
 
-	public Model(Service service, List<Image> images) {
-		services = new LinkedList<>();
-		services.add(service);
+	public Model(List<Service> services, List<Image> images) {
+		this.services = services;
 
 		this.images = new HashMap<>();
 		images.forEach(image -> {

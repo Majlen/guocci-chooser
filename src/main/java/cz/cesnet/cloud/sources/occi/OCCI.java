@@ -44,49 +44,58 @@ public class OCCI implements ResourceAdapter {
 	}
 
 	private Model refresh(String cacheKey) throws CommunicationException {
-		logger.debug("Refreshing OCCI model");
-		URI endpoint = configuration.getSourceURI();
+		logger.debug("Refreshing OCCI models");
+		URI[] endpoints = configuration.getSourceURI();
 
-		HTTPAuthentication auth;
-
-		auth = new VOMSAuthentication(cacheKey);
-		auth.setCAPath(configuration.getAuthCAPath());
-		Client client = new HTTPClient(endpoint, auth);
-
-		cz.cesnet.cloud.occi.Model occiModel = client.getModel();
-		Service service = new Service();
-		service.setEndpoint(endpoint);
-		service.setName(endpoint.getHost());
-
-		List<Flavour> flavours = new LinkedList<>();
+		List<Service> services = new LinkedList<>();
 		List<Image> images = new LinkedList<>();
 
-		for (Mixin m: occiModel.getMixins()) {
-			for (Mixin n : m.getRelations()) {
-				if (n.getTerm().equals("resource_tpl")) {
-					Flavour f = new Flavour();
-					try {
-						f.setName(m.getTerm());
-						f.setId(URI.create(m.getScheme() + m.getTerm()));
-						f.setTitle(m.getTitle());
-					} catch (Exception e) {
-						logger.error("Exception parsing flavour.", e);
+		for (URI endpoint : endpoints) {
+			logger.debug("Refreshing OCCI model for endpoint {}", endpoint);
+			HTTPAuthentication auth = new VOMSAuthentication(cacheKey);
+			auth.setCAPath(configuration.getAuthCAPath());
+
+			Client client = new HTTPClient(endpoint, auth);
+
+			cz.cesnet.cloud.occi.Model occiModel = client.getModel();
+			Service service = new Service();
+			service.setEndpoint(endpoint);
+			service.setName(endpoint.getHost());
+
+			List<Flavour> flavours = new LinkedList<>();
+			List<Image> serviceImages = new LinkedList<>();
+
+			for (Mixin m : occiModel.getMixins()) {
+				for (Mixin n : m.getRelations()) {
+					if (n.getTerm().equals("resource_tpl")) {
+						Flavour f = new Flavour();
+						try {
+							f.setName(m.getTerm());
+							f.setId(URI.create(m.getScheme() + m.getTerm()));
+							f.setTitle(m.getTitle());
+						} catch (Exception e) {
+							logger.error("Exception parsing flavour.", e);
+						}
+						flavours.add(f);
+					} else if (n.getTerm().equals("os_tpl")) {
+						Image img = new Image();
+						img.setName(m.getTitle());
+						img.setId(URI.create(m.getScheme() + m.getTerm()));
+						img.setKey(m.getScheme() + m.getTerm());
+						img.setService(service);
+						serviceImages.add(img);
 					}
-					flavours.add(f);
-				} else if (n.getTerm().equals("os_tpl")) {
-					Image i = new Image();
-					i.setName(m.getTitle());
-					i.setId(URI.create(m.getScheme() + m.getTerm()));
-					i.setKey(m.getScheme() + m.getTerm());
-					images.add(i);
 				}
 			}
+
+			service.setAppliances(serviceImages);
+			service.setFlavours(flavours);
+
+			services.add(service);
+			images.addAll(serviceImages);
 		}
 
-		service.setAppliances(images);
-		service.setFlavours(flavours);
-
-		return new Model(service, images);
+		return new Model(services, images);
 	}
 
 	public Model getModel(String cacheKey) {

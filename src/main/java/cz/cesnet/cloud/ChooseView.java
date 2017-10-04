@@ -97,8 +97,8 @@ public class ChooseView extends HorizontalLayout implements View {
 
 			if (res instanceof AppDB) {
 				addComponent(vosPanel);
-				addComponent(servicesPanel);
 			}
+			addComponent(servicesPanel);
 			addComponent(imagesPanel);
 			addComponent(flavoursPanel);
 			addComponent(nextButton);

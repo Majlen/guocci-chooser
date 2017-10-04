@@ -54,7 +54,8 @@ public class AppDB implements ResourceAdapter {
 	}
 
 	private AppDB(Configuration configuration) {
-		this(configuration.getSourceURI());
+		// Loading data from multiple AppDBs is not supported
+		this(configuration.getSourceURI()[0]);
 		cache = Cache2kBuilder.of(new Cache2kConfiguration<String, Model>())
 				.expireAfterWrite(configuration.getCacheRefresh(), TimeUnit.SECONDS)
 				.resilienceDuration(configuration.getCacheResilience(), TimeUnit.SECONDS)
