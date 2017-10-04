@@ -70,14 +70,12 @@ public class ChooseView extends HorizontalLayout implements View {
 			images.addValueChangeListener(valueChangeEvent -> filtering());
 
 			services.addValueChangeListener(valueChangeEvent -> {
+				flavours.setSelectedItem(null);
+				flavoursList.clear();
 				if (valueChangeEvent.getValue() != null) {
 					flavoursList.addAll(valueChangeEvent.getValue().getFlavours());
-					flavoursProvider.refreshAll();
-				} else {
-					flavours.setSelectedItem(null);
-					flavoursList.clear();
-					flavoursProvider.refreshAll();
 				}
+				flavoursProvider.refreshAll();
 			});
 
 			vos.addValueChangeListener(valueChangeEvent -> fireEvent(new CompletedEvent(this)));
