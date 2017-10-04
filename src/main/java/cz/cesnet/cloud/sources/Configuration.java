@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class Configuration {
 	private final static String RESOURCE_PROPERTY = "guocci.chooser.resource.type";
-	private final static String RESOURCE_URI_PROPERTY = "guocci.resource.uri";
+	private final static String RESOURCE_URI_PROPERTY = "guocci.chooser.resource.uri";
 	private final static String AUTH_CA_PATH_PROPERTY = "guocci.occi.x509.capath";
 	private final static String CACHE_REFRESH_PROPERTY = "guocci.chooser.cache.refresh";
 	private final static String CACHE_RESILIENCE_PROPERTY = "guocci.chooser.cache.resilience";
