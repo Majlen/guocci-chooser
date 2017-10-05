@@ -195,11 +195,12 @@ public class ChooseView extends HorizontalLayout implements View {
 			builder.append("flavour/");
 			builder.append(URLEncoder.encode(f.getId().toString(), "UTF-8"));
 			builder.append("&");
+			builder.append("service/");
+			builder.append(URLEncoder.encode(s.getEndpoint().toString(), "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			logger.error("UTF-8 is unsupported! Should never happen.", e);
 		}
 
-		builder.deleteCharAt(builder.lastIndexOf("&"));
 
 		return builder.toString();
 	}
